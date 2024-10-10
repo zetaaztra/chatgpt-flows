@@ -1,0 +1,125 @@
+The recommended git tool is: NONE
+using credential af40c6cf-845b-460b-8159-47a9ebed04b0
+Cloning the remote Git repository
+Cloning repository https://github.com/zetaaztra/Vivek-s-Gaming-Application.git
+ > D:\GIT init C:\ProgramData\Jenkins\.jenkins\workspace\dev_1 # timeout=10
+ERROR: Error cloning remote repo 'origin'
+hudson.plugins.git.GitException: Could not init C:\ProgramData\Jenkins\.jenkins\workspace\dev_1
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.CliGitAPIImpl$5.execute(CliGitAPIImpl.java:1073)
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.CliGitAPIImpl$2.execute(CliGitAPIImpl.java:819)
+	at PluginClassLoader for git//hudson.plugins.git.GitSCM.retrieveChanges(GitSCM.java:1220)
+	at PluginClassLoader for git//hudson.plugins.git.GitSCM._checkout(GitSCM.java:1310)
+	at PluginClassLoader for git//hudson.plugins.git.GitSCM.checkout(GitSCM.java:1277)
+	at PluginClassLoader for workflow-scm-step//org.jenkinsci.plugins.workflow.steps.scm.SCMStep.checkout(SCMStep.java:136)
+	at PluginClassLoader for workflow-scm-step//org.jenkinsci.plugins.workflow.steps.scm.SCMStep$StepExecutionImpl.run(SCMStep.java:101)
+	at PluginClassLoader for workflow-scm-step//org.jenkinsci.plugins.workflow.steps.scm.SCMStep$StepExecutionImpl.run(SCMStep.java:88)
+	at PluginClassLoader for workflow-step-api//org.jenkinsci.plugins.workflow.steps.SynchronousNonBlockingStepExecution.lambda$start$0(SynchronousNonBlockingStepExecution.java:47)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+Caused by: hudson.plugins.git.GitException: Error performing git command: D:\GIT init C:\ProgramData\Jenkins\.jenkins\workspace\dev_1
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.CliGitAPIImpl.launchCommandIn(CliGitAPIImpl.java:2862)
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.CliGitAPIImpl.launchCommandIn(CliGitAPIImpl.java:2766)
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.CliGitAPIImpl.launchCommandIn(CliGitAPIImpl.java:2761)
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.CliGitAPIImpl.launchCommand(CliGitAPIImpl.java:2051)
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.CliGitAPIImpl$5.execute(CliGitAPIImpl.java:1071)
+	... 13 more
+Caused by: java.io.IOException: Cannot run program "D:\GIT" (in directory "C:\ProgramData\Jenkins\.jenkins\workspace\dev_1"): CreateProcess error=5, Access is denied
+	at java.base/java.lang.ProcessBuilder.start(ProcessBuilder.java:1143)
+	at java.base/java.lang.ProcessBuilder.start(ProcessBuilder.java:1073)
+	at hudson.Proc$LocalProc.<init>(Proc.java:252)
+	at hudson.Proc$LocalProc.<init>(Proc.java:221)
+	at hudson.Launcher$LocalLauncher.launch(Launcher.java:994)
+	at hudson.Launcher$ProcStarter.start(Launcher.java:506)
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.CliGitAPIImpl.launchCommandIn(CliGitAPIImpl.java:2839)
+	... 17 more
+Caused by: java.io.IOException: CreateProcess error=5, Access is denied
+	at java.base/java.lang.ProcessImpl.create(Native Method)
+	at java.base/java.lang.ProcessImpl.<init>(ProcessImpl.java:499)
+	at java.base/java.lang.ProcessImpl.start(ProcessImpl.java:158)
+	at java.base/java.lang.ProcessBuilder.start(ProcessBuilder.java:1110)
+	... 23 more
+ERROR: Error cloning remote repo 'origin'
+ERROR: Maximum checkout retry attempts reached, aborting
+ChatGPT
+
+Thought for a few seconds
+
+The error you're encountering indicates that Jenkins is having trouble executing Git commands due to an "Access is denied" issue. Let's break down the problem and provide a comprehensive solution to resolve it.
+
+Understanding the Error
+Git Tool Configuration:
+
+Message: The recommended git tool is: NONE
+Implication: Jenkins hasn't detected or configured a Git tool. This means Jenkins doesn't know where Git is installed on your system.
+Cloning Process:
+
+Attempted Command: D:\GIT init C:\ProgramData\Jenkins\.jenkins\workspace\dev_1
+Issue: Jenkins is trying to execute D:\GIT as if it's the Git executable, which is incorrect. This path likely points to the Git installation directory, not the Git executable itself.
+Permission Error:
+
+Error: CreateProcess error=5, Access is denied
+Cause: Jenkins lacks the necessary permissions to execute the Git command or access the specified directory.
+Step-by-Step Solution
+Verify Git Installation:
+
+Check Git Path:
+Ensure Git is installed on the Jenkins server.
+Typically, Git executables are located in C:\Program Files\Git\bin\git.exe or a similar directory.
+Test Git Manually:
+Open a Command Prompt on the Jenkins server.
+Run git --version to verify Git is accessible and functioning.
+Configure Git in Jenkins:
+
+Access Global Tool Configuration:
+Navigate to Manage Jenkins > Global Tool Configuration.
+Add Git Installation:
+Under the Git section, click Add Git.
+Name: Assign a recognizable name (e.g., Git).
+Path to Git executable: Specify the full path to git.exe (e.g., C:\Program Files\Git\bin\git.exe).
+Automatic Installation (Optional): You can allow Jenkins to install Git automatically if preferred.
+Save Configuration:
+Click Save to apply the changes.
+Update Jenkins Job Configuration:
+
+Edit the Affected Job:
+Go to the Jenkins dashboard and select the job that's failing.
+Click Configure.
+Source Code Management:
+Under the Source Code Management section, ensure Git is selected.
+Repository URL: Verify it's correctly set to https://github.com/zetaaztra/Vivek-s-Gaming-Application.git.
+Credentials: Ensure the correct credentials are selected or configured.
+Git Tool: Choose the Git installation you configured earlier (e.g., Git).
+Save Configuration:
+Click Save to update the job settings.
+Check Permissions:
+
+Jenkins User Permissions:
+Ensure the user account running Jenkins has read and execute permissions for the Git executable and the workspace directory (C:\ProgramData\Jenkins\.jenkins\workspace\dev_1).
+Adjust Permissions if Necessary:
+Right-click on the Git executable (git.exe) and select Properties.
+Navigate to the Security tab and ensure the Jenkins user has the necessary permissions.
+Similarly, verify permissions for the workspace directory.
+Validate and Test:
+
+Trigger a Build:
+Start a new build of the affected job.
+Monitor the Console Output:
+Check if the Git clone operation proceeds without errors.
+Troubleshoot Further if Needed:
+If issues persist, consider enabling more verbose logging for Git operations in Jenkins for deeper insights.
+Additional Recommendations
+Environment Variables:
+
+Ensure that the Git executable directory is added to the system's PATH environment variable. This allows Jenkins to locate Git without specifying the full path each time.
+Firewall and Antivirus:
+
+Verify that no firewall or antivirus software is blocking Jenkins or Git operations.
+Jenkins Updates:
+
+Ensure Jenkins and its Git plugins are up-to-date to benefit from the latest fixes and features.
+By following these steps, you should be able to resolve the "Access is denied" error and successfully clone your Git repository using Jenkins.
+
+If you continue to face issues after these steps, please provide additional logs or details, and I'll be happy to assist further.
