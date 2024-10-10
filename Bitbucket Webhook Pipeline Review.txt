@@ -1,0 +1,100 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'jdk11'
+        maven 'maven'
+    }
+
+    environment {
+        TOMCAT_WEBAPPS = '/opt/tomcat/webapps/'
+    }
+
+    triggers {
+        GenericTrigger(
+            genericVariables: [
+                [key: 'ref', value: '$ref']
+            ],
+            causeString: 'Triggered by Bitbucket',
+            token: 'your-webhook-token',
+            printContributedVariables: true,
+            printPostContent: true
+        )
+    }
+
+    stages {
+        stage('BIT CHECKOUT') {
+            steps {
+                git branch: 'bandwidth_numweb_aug2024', 
+                url: 'https://bitbucket.org/numeracle-202/numercleweb.git', 
+                credentialsId: 'enter-id'
+            }
+        }
+
+        stage('CLEAN') {
+            steps {
+                sh "mvn clean"
+            }
+        }
+
+        stage('COMPILE') {
+            steps {
+                sh "mvn compile"
+            }
+        }
+
+        stage('PKG') {
+            steps {
+                sh "mvn package"
+            }
+        }
+
+        stage('DEPLOY') {
+            steps {
+                script {
+                    if (!fileExists('.ssh/known_hosts')) {
+                        sh 'ssh-keyscan 13.212.2.190 >> ~/.ssh/known_hosts'
+                    }
+                }
+                sshagent (credentials: ['436a94a9-c095-462c-b23b-44407fd69a21']) {
+                    sh "rsync -avz -e ssh target/*.jar ubuntu@13.212.2.190:$TOMCAT_WEBAPPS"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build and deployment completed successfully!'
+        }
+        failure {
+            echo 'Build or deployment failed.'
+        }
+    }
+}
+
+my employer uses bitbucket webhook trigger do i need to change somethining in this groovy script
+ChatGPT said:
+ChatGPT
+Memory updated
+The pipeline script you provided seems mostly correct, but there are a few points to review or update based on your specific setup and Bitbucket webhook triggers:
+
+Webhook Token: Ensure that your-webhook-token in the GenericTrigger block is replaced with the actual token used by Bitbucket to authenticate the trigger.
+
+Environment Variables in Trigger: If you need to reference specific payload data (such as $ref), you might need to ensure that Bitbucket's webhook payload provides the correct information. Double-check the key-value pairs in the genericVariables. The key 'ref' should match the actual JSON payload sent by Bitbucket.
+
+Git Credentials: Replace 'enter-id' with the actual credentialsId from Jenkins for accessing your Bitbucket repository.
+
+Tomcat Deployment Path: Ensure that the Tomcat path ($TOMCAT_WEBAPPS) is correct and points to where your .jar files should be placed within the Tomcat installation. Also, verify that the file being deployed is a .jar, as Tomcat typically deploys .war files. If you're deploying a .war file, you might need to modify the rsync command accordingly.
+
+SSH Known Hosts: The script checks for the existence of ~/.ssh/known_hosts. This is important for SSH fingerprint verification, but ensure that this process works correctly during each pipeline execution.
+
+Bitbucket Branch: Ensure that the branch bandwidth_numweb_aug2024 is the correct branch for deployment. If the branch changes, you might want to parameterize it or modify the pipeline script as needed.
+
+If these changes align with your company's setup, your pipeline should work correctly for triggering from Bitbucket.
+
+
+
+
+
+
