@@ -1,0 +1,200 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'jdk11'
+        maven 'maven'
+    }
+
+    environment {
+        TOMCAT_WEBAPPS = '/opt/tomcat/webapps/'
+    }
+
+    stages {
+        stage('BIT CHECKOUT') {
+            steps {
+                git branch: 'bandwidth_numweb_aug2024', 
+                url: 'https://bitbucket.org/numeracle-202/numercleweb.git', 
+                credentialsId: 'enter-id'
+            }
+        }
+
+        stage('CLEAN') {
+            steps {
+                sh "mvn clean"
+            }
+        }
+
+        stage('COMPILE') {
+            steps {
+                sh "mvn compile"
+            }
+        }
+
+        stage('PKG') {
+            steps {
+                sh "mvn package -Dpackaging=war"
+            }
+        }
+
+        stage('DEPLOY') {
+            steps {
+                script {
+                    if (!fileExists('.ssh/known_hosts')) {
+                        sh 'ssh-keyscan 10.0.16.79 >> ~/.ssh/known_hosts'
+                    }
+                }
+                sshagent (credentials: ['Linux']) {
+                    sh "rsync -avz -e ssh target/*.war ec2-user@10.0.16.79:$TOMCAT_WEBAPPS"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build and deployment completed successfully!'
+        }
+        failure {
+            echo 'Build or deployment failed.'
+        }
+    }
+}
+
+WARNING] npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@2.1.3 (node_modules/watchpack/node_modules/fsevents):
+[WARNING] npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@2.1.3: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+[WARNING] npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@1.2.13 (node_modules/fsevents):
+[WARNING] npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@1.2.13: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+[WARNING] npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@2.1.3 (node_modules/karma/node_modules/fsevents):
+[WARNING] npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@2.1.3: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+[ERROR] 
+[INFO] added 1718 packages from 1294 contributors and audited 1728 packages in 38.615s
+[INFO] found 338 vulnerabilities (42 low, 106 moderate, 166 high, 24 critical)
+[INFO]   run npm audit fix to fix them, or npm audit for details
+[INFO] 
+[INFO] --- frontend:1.5:npm (npm install for highcharts) @ webContent ---
+[INFO] Running 'npm install highcharts-border-radius' in /var/lib/jenkins/workspace/numeracle-self-sign-deployment-pipleine/development/webContent
+[WARNING] npm WARN angular2-busy@2.0.4 requires a peer of @angular/animations@^4.0.0 but none is installed. You must install peer dependencies yourself.
+[WARNING] npm WARN angular2-busy@2.0.4 requires a peer of @angular/common@^4.0.0 but none is installed. You must install peer dependencies yourself.
+[WARNING] npm WARN angular2-busy@2.0.4 requires a peer of @angular/core@^4.0.0 but none is installed. You must install peer dependencies yourself.
+[WARNING] npm WARN angular2-busy@2.0.4 requires a peer of @angular/platform-browser@^4.0.0 but none is installed. You must install peer dependencies yourself.
+[WARNING] npm WARN angular2-busy@2.0.4 requires a peer of rxjs@^5.0.0 but none is installed. You must install peer dependencies yourself.
+[WARNING] npm WARN bootstrap@4.5.2 requires a peer of popper.js@^1.16.1 but none is installed. You must install peer dependencies yourself.
+[WARNING] npm WARN highcharts-angular@2.7.0 requires a peer of @angular/common@^9.0.0 but none is installed. You must install peer dependencies yourself.
+[WARNING] npm WARN highcharts-angular@2.7.0 requires a peer of @angular/core@^9.0.0 but none is installed. You must install peer dependencies yourself.
+[WARNING] npm WARN ws@7.3.1 requires a peer of bufferutil@^4.0.1 but none is installed. You must install peer dependencies yourself.
+[WARNING] npm WARN ws@7.3.1 requires a peer of utf-8-validate@^5.0.2 but none is installed. You must install peer dependencies yourself.
+[WARNING] npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@2.1.3 (node_modules/karma/node_modules/fsevents):
+[WARNING] npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@2.1.3: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+[WARNING] npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@1.2.13 (node_modules/fsevents):
+[WARNING] npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@1.2.13: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+[WARNING] npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@2.1.3 (node_modules/watchpack/node_modules/fsevents):
+[WARNING] npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@2.1.3: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+[ERROR] 
+[INFO] + highcharts-border-radius@0.0.4
+[INFO] updated 1 package and audited 1728 packages in 14.132s
+[INFO] found 338 vulnerabilities (42 low, 106 moderate, 166 high, 24 critical)
+[INFO]   run npm audit fix to fix them, or npm audit for details
+[INFO] 
+[INFO] --- frontend:1.5:npm (build code) @ webContent ---
+[INFO] Running 'npm run ${angbuild}' in /var/lib/jenkins/workspace/numeracle-self-sign-deployment-pipleine/development/webContent
+[ERROR] npm ERR! missing script: ${angbuild}
+[ERROR] npm ERR! 
+[ERROR] npm ERR! Did you mean this?
+[ERROR] npm ERR!     stagingbuild
+[ERROR] 
+[ERROR] npm ERR! A complete log of this run can be found in:
+[ERROR] npm ERR!     /home/ec2-user/.npm/_logs/2024-10-08T10_33_58_167Z-debug.log
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary:
+[INFO] 
+[INFO] portal 0.0.1-SNAPSHOT .............................. SUCCESS [  0.003 s]
+[INFO] webContent 0.0.1-SNAPSHOT .......................... FAILURE [ 56.775 s]
+[INFO] fonts-extension 1.0-SNAPSHOT ....................... SKIPPED
+[INFO] code 0.0.1-SNAPSHOT ................................ SKIPPED
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  56.959 s
+[INFO] Finished at: 2024-10-08T10:33:58Z
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal com.github.eirslett:frontend-maven-plugin:1.5:npm (build code) on project webContent: Failed to run task: 'npm run ${angbuild}' failed. org.apache.commons.exec.ExecuteException: Process exited with an error: 1 (Exit value: 1) -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :webContent
+
+what does tis error say...summarise for a 13 year old boy and is it the groovy script rror or code in bitbucket error what shoudl i do to rectify this 
+ChatGPT
+
+Thought for a couple of seconds
+
+Sure, let's break this down in a simple way!
+
+What's Happening?
+You have a Jenkins pipeline (a series of automated steps) that:
+
+Checks out your code from Bitbucket.
+Cleans, compiles, and packages your Java application using Maven.
+Deploys the application to a server.
+However, during the build process, you encountered some errors related to npm (a tool used for managing JavaScript packages).
+
+The Main Error Explained
+The key error message is:
+
+bash
+Copy code
+npm ERR! missing script: ${angbuild}
+What does this mean?
+
+npm is trying to run a script named ${angbuild}.
+${angbuild} is supposed to be a placeholder for an actual script name (like build or stagingbuild).
+But, ${angbuild} wasn't replaced with a real script name, so npm doesn't know what to do. It can't find a script with that name.
+Is It a Groovy Script Error or a Bitbucket Code Error?
+It's a Groovy Script (Jenkins Pipeline) Error.
+The mistake is in your Jenkins pipeline script, not in the code you have in Bitbucket.
+Specifically, the pipeline is trying to use a variable ${angbuild} that hasn't been defined or set to a specific value.
+How to Fix It
+Define the angbuild Variable:
+
+In your Jenkins pipeline, you need to set what ${angbuild} should be. For example, if you want to run the build script, you should define it.
+Update the Pipeline Script:
+
+Option 1: Define angbuild in the environment section.
+groovy
+Copy code
+environment {
+    TOMCAT_WEBAPPS = '/opt/tomcat/webapps/'
+    angbuild = 'build' // Add this line
+}
+Option 2: Replace ${angbuild} with the actual script name directly in the command.
+groovy
+Copy code
+sh "npm run build" // Replace ${angbuild} with 'build'
+Check Your package.json:
+
+Ensure that the script you're trying to run (like build) exists in your package.json file under the scripts section.
+json
+Copy code
+{
+  "scripts": {
+    "build": "ng build",
+    "stagingbuild": "ng build --configuration=staging"
+  }
+}
+Rerun the Pipeline:
+
+After making these changes, run the Jenkins pipeline again to see if the error is resolved.
+Summary for a 13-Year-Old
+Imagine you're following a recipe that says, "Bake a ${cakeType} cake," but you never told the recipe what ${cakeType} is. The oven doesn't know what to do because it doesn't know what kind of cake to bake. Similarly, your Jenkins pipeline is trying to run a recipe step called ${angbuild}, but it doesn't know what ${angbuild} should be. You need to tell it what kind of build to do, like "build" or "stagingbuild."
+
+Next Steps
+Fix the Jenkins pipeline by defining what ${angbuild} should be.
+Ensure your package.json has the necessary scripts defined.
+Rerun the pipeline to see if everything works smoothly.
+If you follow these steps and still face issues, feel free to ask for more help!
