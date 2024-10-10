@@ -1,0 +1,30 @@
+what is jar and war formats
+ChatGPT said:
+ChatGPT
+In Java, JAR and WAR files are packaging formats that bundle Java application components. They are both types of archives but serve different purposes in deployment.
+
+JAR (Java Archive)
+Purpose: JAR files are primarily used to package and distribute Java libraries and standalone applications.
+Contents: They contain compiled .class files, resources (like images or text files), and a manifest file (META-INF/MANIFEST.MF) which can specify details such as the entry point (main class) for execution.
+Execution: A JAR file can be executable if it includes a manifest specifying the main class. It can then be run using java -jar filename.jar.
+Use Cases: Typically used for desktop or backend applications, libraries, and any code that does not need to run in a web server or servlet container.
+WAR (Web Application Archive)
+Purpose: WAR files package and deploy Java web applications to a servlet container (such as Tomcat, JBoss, or Jetty).
+Contents: They include all application components, such as:
+WEB-INF/: Contains the web application's configuration files, web.xml (optional in newer versions), and any application-specific resources like .jar libraries.
+Static files: HTML, CSS, JavaScript, and image files accessible by clients.
+Compiled classes: Java classes and resources necessary for the application.
+Deployment: WAR files are deployed to application servers, which unpack and manage them, handling HTTP requests and serving responses.
+Use Cases: Primarily used for Java web applications that are meant to run on servers, handling client-server interactions over HTTP(S).
+Summary
+JAR: For general-purpose Java applications and libraries.
+WAR: For web applications that run on servers.
+
+
+
+
+
+
+
+
+
