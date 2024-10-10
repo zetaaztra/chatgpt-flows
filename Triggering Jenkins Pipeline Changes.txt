@@ -1,0 +1,39 @@
+To automatically trigger a Jenkins pipeline when there are changes in a Git repository, you can set up a webhook in the Git service (such as GitHub, GitLab, or Bitbucket) to notify Jenkins about the code changes. Here’s how the process generally works:
+
+1. Git Webhook Configuration:
+A webhook is configured in the Git repository (e.g., GitHub).
+The webhook sends an HTTP POST request to Jenkins whenever a commit is pushed or a pull request is created. This informs Jenkins that new code has been committed.
+In GitHub:
+
+Go to the repository settings.
+Under Webhooks, add a new webhook.
+Set the Payload URL to the Jenkins URL (e.g., http://<Jenkins-server>/github-webhook/).
+Choose the events to trigger the webhook, such as "push" or "pull request".
+2. Jenkins Configuration:
+For Freestyle Job:
+
+In Jenkins, create or open the job.
+Under the Source Code Management section, configure the repository URL for your Git repository.
+Scroll to the Build Triggers section and check GitHub hook trigger for GITScm polling (for GitHub) or Build when a change is pushed to GitLab (for GitLab).
+For Pipeline Job:
+
+For Jenkins pipelines, define the Jenkinsfile with the necessary pipeline stages.
+Set the pipeline’s source as the Git repository containing the code.
+3. Poll SCM (Optional):
+If webhooks are not supported or configured, you can use Jenkins’ Poll SCM option.
+This option periodically checks the Git repository for changes and triggers a build if new commits are found.
+You can configure this by checking the Poll SCM box in the Build Triggers section and setting a cron-like schedule (e.g., H/5 * * * * to check every 5 minutes).
+Pipeline Trigger Mechanism:
+When a commit is pushed:
+
+The webhook sends a notification to Jenkins.
+Jenkins, upon receiving the notification, checks out the new code from the Git repository.
+Jenkins triggers the appropriate pipeline or job.
+The pipeline runs according to the stages defined in the Jenkinsfile.
+This setup ensures that Jenkins builds the project every time there's a code change in the Git repository.
+
+
+
+
+
+
