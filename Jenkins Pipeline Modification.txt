@@ -1,0 +1,749 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'jdk11'
+        maven 'maven'
+    }
+
+    environment {
+        TOMCAT_WEBAPPS = '/opt/tomcat/webapps/'
+    }
+
+    triggers {
+        GenericTrigger(
+            genericVariables: [
+                [key: 'ref', value: '$ref']
+            ],
+            causeString: 'Triggered by Bitbucket',
+            token: 'your-webhook-token',
+            printContributedVariables: true,
+            printPostContent: true
+        )
+    }
+
+    stages {
+        stage('BIT CHECKOUT') {
+            steps {
+                git branch: 'bandwidth_numweb_aug2024', 
+                url: 'https://bitbucket.org/numeracle-202/numercleweb.git', 
+                credentialsId: 'enter-id'
+            }
+        }
+
+        stage('CLEAN') {
+            steps {
+                sh "mvn clean"
+            }
+        }
+
+        stage('COMPILE') {
+            steps {
+                sh "mvn compile"
+            }
+        }
+
+        stage('PKG') {
+            steps {
+                sh "mvn package"
+            }
+        }
+
+        stage('DEPLOY') {
+            steps {
+                script {
+                    if (!fileExists('.ssh/known_hosts')) {
+                        sh 'ssh-keyscan 13.212.2.190 >> ~/.ssh/known_hosts'
+                    }
+                }
+                sshagent (credentials: ['436a94a9-c095-462c-b23b-44407fd69a21']) {
+                    sh "rsync -avz -e ssh target/*.jar ubuntu@13.212.2.190:$TOMCAT_WEBAPPS"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build and deployment completed successfully!'
+        }
+        failure {
+            echo 'Build or deployment failed.'
+        }
+    }
+remove the triggers and compile it war
+
+2/2
+
+ChatGPT said:
+ChatGPT
+Here's your updated Jenkins pipeline, where I have removed the triggers section and modified the package step to compile it into a WAR file instead of a JAR:
+
+groovy
+Copy code
+pipeline {
+    agent any
+
+    tools {
+        jdk 'jdk11'
+        maven 'maven'
+    }
+
+    environment {
+        TOMCAT_WEBAPPS = '/opt/tomcat/webapps/'
+    }
+
+    stages {
+        stage('BIT CHECKOUT') {
+            steps {
+                git branch: 'bandwidth_numweb_aug2024', 
+                url: 'https://bitbucket.org/numeracle-202/numercleweb.git', 
+                credentialsId: 'enter-id'
+            }
+        }
+
+        stage('CLEAN') {
+            steps {
+                sh "mvn clean"
+            }
+        }
+
+        stage('COMPILE') {
+            steps {
+                sh "mvn compile"
+            }
+        }
+
+        stage('PKG') {
+            steps {
+                sh "mvn package -Dpackaging=war"
+            }
+        }
+
+        stage('DEPLOY') {
+            steps {
+                script {
+                    if (!fileExists('.ssh/known_hosts')) {
+                        sh 'ssh-keyscan 13.212.2.190 >> ~/.ssh/known_hosts'
+                    }
+                }
+                sshagent (credentials: ['436a94a9-c095-462c-b23b-44407fd69a21']) {
+                    sh "rsync -avz -e ssh target/*.war ubuntu@13.212.2.190:$TOMCAT_WEBAPPS"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build and deployment completed successfully!'
+        }
+        failure {
+            echo 'Build or deployment failed.'
+        }
+    }
+}
+Changes made:
+Removed the triggers section.
+Modified the mvn package step to produce a WAR file (-Dpackaging=war).
+Updated the deployment step to transfer the WAR file (*.war) instead of a JAR file.
+This should build a WAR file and deploy it to the Tomcat server.
+
+
+
+
+
+
+You said:
+how to check status in aws linux 2 machine to check tomcat is running or not
+ChatGPT said:
+ChatGPT
+To check the status of Tomcat on an AWS Linux 2 machine, follow these steps:
+
+1. Log into your AWS Linux 2 instance:
+Use SSH to connect to your instance:
+
+bash
+Copy code
+ssh -i /path/to/your-key.pem ec2-user@your-ec2-instance-public-ip
+2. Check the status of the Tomcat service:
+If you have installed Tomcat as a service, you can check its status with systemctl. Run the following command:
+
+bash
+Copy code
+sudo systemctl status tomcat
+This will display the status of the Tomcat service, showing if it is active (running) or inactive.
+
+3. Check if the Tomcat process is running:
+If Tomcat was started manually or through a custom script, use the following command to check if the process is running:
+
+bash
+Copy code
+ps aux | grep tomcat
+This will show if the Tomcat process is active.
+
+4. Check if Tomcat is listening on the default port (8080):
+You can also check if Tomcat is listening on port 8080 by using netstat:
+
+bash
+Copy code
+sudo netstat -tuln | grep 8080
+If Tomcat is running and listening on port 8080, you will see an output like:
+
+ruby
+Copy code
+tcp6       0      0 :::8080                 :::*                    LISTEN
+5. Check Tomcat logs:
+If Tomcat is not running, it may have encountered an error during startup. You can inspect the Tomcat logs to find any error messages. The logs are usually located in the /opt/tomcat/logs/ directory.
+
+To view the most recent logs:
+
+bash
+Copy code
+sudo tail -f /opt/tomcat/logs/catalina.out
+This will show you the latest log entries and help you diagnose any issues with Tomcat.
+
+By following these steps, you should be able to determine whether Tomcat is running or not on your AWS Linux 2 instance.
+
+
+
+
+
+
+You said:
+aws linux 2 server check the authorized keys coomand
+ChatGPT said:
+ChatGPT
+To check the contents of the authorized keys on an AWS Linux 2 server, which are used to determine which SSH keys are allowed for login, follow these steps:
+
+1. Log into your AWS Linux 2 instance:
+You must have access to the server to check the authorized_keys file.
+
+bash
+Copy code
+ssh -i /path/to/your-key.pem ec2-user@your-ec2-instance-public-ip
+2. Navigate to the .ssh directory:
+The authorized_keys file is typically located in the .ssh directory of the user you want to check. For the default user on AWS Linux 2 (ec2-user), it will be in /home/ec2-user/.ssh/.
+
+bash
+Copy code
+cd /home/ec2-user/.ssh/
+3. Check the authorized_keys file:
+Now you can view the authorized_keys file to see which public keys are authorized for SSH access.
+
+bash
+Copy code
+cat authorized_keys
+This will display the contents of the file, listing all authorized SSH public keys.
+
+Example Output:
+bash
+Copy code
+ssh-rsa AAAAB3Nza...your-public-key... comment
+If the file is missing or empty, no SSH keys are currently authorized for that user, which may explain SSH access issues.
+
+4. Check permissions:
+Ensure the correct permissions are set on the .ssh directory and the authorized_keys file, as improper permissions can cause SSH access problems.
+
+.ssh directory permissions:
+bash
+Copy code
+chmod 700 /home/ec2-user/.ssh
+authorized_keys file permissions:
+bash
+Copy code
+chmod 600 /home/ec2-user/.ssh/authorized_keys
+5. For other users:
+If you're checking the authorized_keys for another user (e.g., ubuntu), adjust the path accordingly:
+
+bash
+Copy code
+cd /home/ubuntu/.ssh/
+cat authorized_keys
+This will allow you to inspect the authorized keys for different users on the system.
+
+
+
+
+
+
+You said:
+pipeline {
+    agent any
+
+    tools {
+        jdk 'jdk11'
+        maven 'maven'
+    }
+
+    environment {
+        TOMCAT_WEBAPPS = '/opt/tomcat/webapps/'
+    }
+
+    stages {
+        stage('BIT CHECKOUT') {
+            steps {
+                git branch: 'bandwidth_numweb_aug2024', 
+                url: 'https://bitbucket.org/numeracle-202/numercleweb.git', 
+                credentialsId: 'enter-id'
+            }
+        }
+
+        stage('CLEAN') {
+            steps {
+                sh "mvn clean"
+            }
+        }
+
+        stage('COMPILE') {
+            steps {
+                sh "mvn compile"
+            }
+        }
+
+        stage('PKG') {
+            steps {
+                sh "mvn package -Dpackaging=war"
+            }
+        }
+
+        stage('DEPLOY') {
+            steps {
+                script {
+                    if (!fileExists('.ssh/known_hosts')) {
+                        sh 'ssh-keyscan 13.212.2.190 >> ~/.ssh/known_hosts'
+                    }
+                }
+                sshagent (credentials: ['436a94a9-c095-462c-b23b-44407fd69a21']) {
+                    sh "rsync -avz -e ssh target/*.war ubuntu@13.212.2.190:$TOMCAT_WEBAPPS"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build and deployment completed successfully!'
+        }
+        failure {
+            echo 'Build or deployment failed.'
+        }
+    }
+}
+my ip is in a private vpc network will this groovy script work if i run this will the war format get placed in this folder
+
+ChatGPT
+
+Thought for a couple of seconds
+
+Deploying a WAR file to a server within a private VPC network involves several considerations to ensure that your Jenkins pipeline functions correctly. Let's break down whether your provided Groovy script will work in this scenario and what steps you might need to take to ensure successful deployment.
+
+1. Network Connectivity
+Issue:
+Your target server (13.212.2.190) is within a private VPC network, which means it's not directly accessible from the public internet.
+
+Solution:
+Ensure that the Jenkins server has network access to the private IP (13.212.2.190). Here are common approaches to achieve this:
+
+Jenkins Server Inside the Same VPC:
+If your Jenkins server is hosted within the same VPC or connected via a VPN, it can directly communicate with the private IP.
+
+Bastion Host (Jump Server):
+If your Jenkins server is outside the VPC, you can set up a bastion host (a publicly accessible server within the VPC) to act as an intermediary for SSH connections.
+
+VPC Peering or VPN Connection:
+Establish VPC peering or a VPN connection between the network where Jenkins is hosted and the VPC containing the target server.
+
+Verification Steps:
+
+From Jenkins Server:
+
+bash
+Copy code
+ping 13.212.2.190
+bash
+Copy code
+ssh -i /path/to/your-key.pem ubuntu@13.212.2.190
+If Using a Bastion Host: Configure SSH to use the bastion as a proxy. Update your rsync command accordingly:
+
+bash
+Copy code
+rsync -avz -e "ssh -o ProxyCommand='ssh -W %h:%p -i /path/to/bastion-key.pem ubuntu@BASTION_HOST'" target/*.war ubuntu@13.212.2.190:$TOMCAT_WEBAPPS
+2. Security Groups and Firewall Rules
+Issue:
+Even if network connectivity is established, security groups or firewall rules might block SSH access.
+
+Solution:
+
+Security Groups for Target Server:
+
+Inbound Rules:
+Ensure that the security group attached to 13.212.2.190 allows inbound SSH (port 22) from the Jenkins server's IP or the bastion host.
+
+Outbound Rules:
+Ensure that the server can send outbound traffic if necessary.
+
+Jenkins Server Security:
+
+Ensure that the Jenkins server's security group allows outbound SSH traffic to the target server.
+Verification Steps:
+
+Check Security Groups:
+Navigate to the AWS EC2 Console.
+Select the target instance (13.212.2.190).
+Review its security group to ensure port 22 is open to the Jenkins server or bastion host.
+3. SSH Configuration and Authorized Keys
+Issue:
+SSH authentication must be correctly set up to allow Jenkins to connect to the target server.
+
+Solution:
+
+SSH Keys:
+
+Ensure that the private key used by Jenkins (436a94a9-c095-462c-b23b-44407fd69a21) corresponds to the public key listed in the ~/.ssh/authorized_keys of the ubuntu user on the target server.
+Known Hosts:
+
+Your script already includes a step to add the target server to known_hosts, which is good for avoiding SSH authenticity prompts.
+Verification Steps:
+
+From Jenkins Server:
+
+bash
+Copy code
+ssh -i /path/to/private-key.pem ubuntu@13.212.2.190
+Ensure you can log in without being prompted for a password.
+
+4. Jenkins Pipeline Script Review
+Your updated Jenkins pipeline script looks mostly correct, but let's review it in the context of deploying to a private VPC:
+
+groovy
+Copy code
+pipeline {
+    agent any
+
+    tools {
+        jdk 'jdk11'
+        maven 'maven'
+    }
+
+    environment {
+        TOMCAT_WEBAPPS = '/opt/tomcat/webapps/'
+    }
+
+    stages {
+        stage('BIT CHECKOUT') {
+            steps {
+                git branch: 'bandwidth_numweb_aug2024', 
+                url: 'https://bitbucket.org/numeracle-202/numercleweb.git', 
+                credentialsId: 'enter-id'
+            }
+        }
+
+        stage('CLEAN') {
+            steps {
+                sh "mvn clean"
+            }
+        }
+
+        stage('COMPILE') {
+            steps {
+                sh "mvn compile"
+            }
+        }
+
+        stage('PKG') {
+            steps {
+                sh "mvn package -Dpackaging=war"
+            }
+        }
+
+        stage('DEPLOY') {
+            steps {
+                script {
+                    if (!fileExists('.ssh/known_hosts')) {
+                        sh 'ssh-keyscan 13.212.2.190 >> ~/.ssh/known_hosts'
+                    }
+                }
+                sshagent (credentials: ['436a94a9-c095-462c-b23b-44407fd69a21']) {
+                    sh "rsync -avz -e ssh target/*.war ubuntu@13.212.2.190:$TOMCAT_WEBAPPS"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build and deployment completed successfully!'
+        }
+        failure {
+            echo 'Build or deployment failed.'
+        }
+    }
+}
+Key Points:
+
+Deployment Step:
+
+ssh-keyscan: Ensures the target server's SSH key is known to avoid authenticity prompts.
+sshagent: Utilizes the specified credentials to perform SSH operations.
+rsync: Transfers the WAR file to the specified directory on the target server.
+WAR File Deployment:
+
+Tomcat Deployment:
+Ensure that Tomcat is configured to auto-deploy WAR files placed in the webapps directory.
+Alternatively, you might need to restart Tomcat after deployment for the changes to take effect.
+Potential Enhancements:
+
+Tomcat Restart:
+After deploying the WAR file, you might need to restart Tomcat to pick up the new application. Add an additional step:
+
+groovy
+Copy code
+stage('Restart Tomcat') {
+    steps {
+        sshagent (credentials: ['436a94a9-c095-462c-b23b-44407fd69a21']) {
+            sh "ssh ubuntu@13.212.2.190 'sudo systemctl restart tomcat'"
+        }
+    }
+}
+Error Handling:
+Incorporate more robust error handling to catch and respond to deployment issues.
+
+5. Final Checklist
+Before running the pipeline, ensure the following:
+
+Network Access:
+
+Jenkins can reach 13.212.2.190 via SSH.
+SSH Keys:
+
+Jenkins has the correct private key (436a94a9-c095-462c-b23b-44407fd69a21) configured.
+The corresponding public key is in the ~/.ssh/authorized_keys of the ubuntu user on the target server.
+Security Groups:
+
+Inbound rules on the target server allow SSH from the Jenkins server.
+Tomcat Configuration:
+
+Tomcat is set to auto-deploy WAR files placed in the webapps directory or is configured to reload applications upon deployment.
+Permissions:
+
+The ubuntu user has write permissions to /opt/tomcat/webapps/.
+Jenkins Credentials:
+
+The credentialsId for Git and SSH are correctly configured in Jenkins.
+6. Testing the Deployment
+Dry Run:
+
+Before executing the full pipeline, manually test the rsync command from the Jenkins server to ensure connectivity and correct file placement.
+Example:
+
+bash
+Copy code
+rsync -avz -e "ssh -i /path/to/private-key.pem" target/yourapp.war ubuntu@13.212.2.190:/opt/tomcat/webapps/
+Verify on Target Server:
+
+SSH into 13.212.2.190 and confirm the WAR file is present in /opt/tomcat/webapps/.
+Check Tomcat's webapps directory for the deployed application.
+Access the application via the appropriate URL to ensure it's running as expected.
+Conclusion
+Your Jenkins pipeline script is structured correctly for deploying a WAR file to a remote Tomcat server. However, deploying to a server within a private VPC network adds layers of network and security configurations that must be addressed:
+
+Ensure Network Connectivity:
+Verify that the Jenkins server can communicate with the target server within the VPC.
+
+Proper SSH Configuration:
+Make sure SSH keys and permissions are correctly set up for secure access.
+
+Security Groups and Firewall Rules:
+Configure AWS security groups to allow necessary traffic.
+
+Tomcat Deployment Settings:
+Ensure Tomcat is configured to handle the deployment of WAR files as intended.
+
+By addressing these areas, your pipeline should successfully transfer the WAR file to the specified directory and deploy your application on the Tomcat server within your private VPC.
+
+
+
+
+
+
+You said:
+i pinged the IP
+22 packets transmitted,0 received 100% packet loss what does it means
+ChatGPT
+
+Thought for a couple of seconds
+
+A 100% packet loss when pinging an IP address indicates that none of the ICMP echo requests (the type of packets used by the ping command) received a response. In your case, when you pinged 13.212.2.190, all packets were lost. This situation suggests that your Jenkins server cannot reach the target server at that IP address. Here's a comprehensive breakdown of what this means and how to troubleshoot the issue.
+
+Understanding the Implications
+No Response to Ping:
+
+Packet Loss: All ping packets sent were lost, meaning no ICMP echo replies were received.
+Possible Causes:
+The target server is down or not running.
+Network connectivity issues between your Jenkins server and the target server.
+Firewall rules or Security Groups blocking ICMP traffic.
+The server is configured to ignore ICMP requests for security reasons.
+Impact on Jenkins Pipeline:
+
+Deployment Failure: If the Jenkins server cannot reach the target server, the rsync command in your pipeline will fail, preventing deployment.
+Further Operations Blocked: Other steps that require connectivity (like SSH commands) will also fail.
+Troubleshooting Steps
+1. Verify Server Status
+Ensure the Target Server is Running:
+AWS Console: Log into the AWS Management Console and navigate to the EC2 Dashboard. Check the status of the instance with IP 13.212.2.190.
+Instance State: Ensure that the instance is in a "running" state.
+2. Check Network Connectivity
+From Jenkins Server:
+
+Ping Test:
+bash
+Copy code
+ping -c 4 13.212.2.190
+Result: As you've seen, it results in 100% packet loss.
+Traceroute:
+
+Purpose: Identify where the connection is failing.
+Command:
+bash
+Copy code
+traceroute 13.212.2.190
+Note: If traceroute isn't installed, you can install it using:
+bash
+Copy code
+sudo yum install traceroute -y
+Analysis: Look for where the packets stop. If they don't reach the target VPC, the issue is likely network-related.
+3. Review AWS VPC Configuration
+VPC and Subnet:
+
+Same VPC: Ensure that your Jenkins server and target server are in the same VPC or connected via VPC Peering or a VPN.
+Different VPC: If they are in different VPCs, establish VPC Peering or set up a VPN Connection.
+Security Groups:
+
+Inbound Rules:
+
+SSH (Port 22): Ensure that the security group attached to 13.212.2.190 allows inbound SSH traffic from the Jenkins server's IP or its security group.
+ICMP (Ping): To allow ping, add an inbound rule for ICMP:
+Type: All ICMP - IPv4
+Protocol: ICMP
+Port Range: N/A
+Source: Jenkins server's IP or security group
+Note: Allowing ICMP is optional and often disabled for security. However, for troubleshooting, you might temporarily enable it.
+Outbound Rules:
+
+Ensure that the Jenkins server's security group allows outbound traffic to the target server on the required ports.
+Network ACLs (NACLs):
+
+Inbound and Outbound Rules: Verify that the subnets' NACLs allow the necessary traffic. NACLs are stateless, so both inbound and outbound rules must permit the traffic.
+4. Check Route Tables
+Routing Between Subnets:
+Ensure that the route tables associated with your subnets allow traffic between the Jenkins server and the target server.
+5. Inspect Firewall Settings on the Target Server
+Operating System Firewall:
+AWS Linux 2: Typically uses firewalld or iptables.
+Check Firewall Status:
+bash
+Copy code
+sudo systemctl status firewalld
+Allow SSH and ICMP (for testing):
+bash
+Copy code
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --permanent --add-icmp-block-inversion=no
+sudo firewall-cmd --permanent --add-icmp-type=echo-request
+sudo firewall-cmd --reload
+6. Verify SSH Accessibility
+Direct SSH Attempt:
+From Jenkins Server:
+bash
+Copy code
+ssh -i /path/to/your-key.pem ubuntu@13.212.2.190
+Success: If you can SSH successfully, the issue might be limited to ICMP (ping) being blocked.
+Failure: If SSH also fails, it's indicative of broader connectivity issues.
+7. Utilize a Bastion Host (If Necessary)
+What is a Bastion Host?
+
+A bastion host is a server within your VPC that acts as a gateway for SSH access to other instances in the private network.
+Setup Steps:
+
+Launch a Bastion Host:
+Deploy a new EC2 instance in a public subnet within your VPC.
+Assign a public IP address to this instance.
+Configure Security Groups:
+Allow SSH access to the bastion host from your Jenkins server's IP.
+Allow the bastion host to SSH into the target server.
+Modify Jenkins Pipeline for SSH Through Bastion:
+Update the rsync command to use the bastion as a proxy.
+Example:
+groovy
+Copy code
+sh """
+rsync -avz -e "ssh -o ProxyCommand='ssh -W %h:%p -i /path/to/bastion-key.pem ubuntu@BASTION_HOST_IP'" target/*.war ubuntu@13.212.2.190:$TOMCAT_WEBAPPS
+"""
+Replace:
+/path/to/bastion-key.pem with the path to your bastion host's private key.
+BASTION_HOST_IP with the public IP of your bastion host.
+8. Alternative: Use AWS Systems Manager (SSM)
+What is AWS SSM?
+
+AWS Systems Manager (SSM) allows you to manage your EC2 instances without needing SSH access, using the SSM Agent.
+Benefits:
+
+No Need for Direct Network Access: Useful if your instance is in a private subnet without a bastion host.
+Secure Management: Reduce the attack surface by eliminating the need to open SSH ports.
+Implementation Steps:
+
+Install SSM Agent: Ensure the SSM Agent is installed and running on your target server.
+Assign IAM Role: Attach an IAM role to your EC2 instance with the necessary SSM permissions.
+Use SSM Commands in Jenkins:
+Utilize the AWS CLI to send commands to your instance.
+Example aws ssm send-command to execute deployment scripts.
+Next Steps for Your Jenkins Pipeline
+Given that pinging the target IP fails, your Jenkins pipeline will not be able to deploy to 13.212.2.190 as it currently stands. To resolve this and ensure successful deployment, follow these steps:
+
+Establish Network Connectivity:
+
+Ensure that your Jenkins server can communicate with the target server either by:
+Hosting Jenkins within the same VPC.
+Setting up a VPN connection or VPC Peering.
+Using a Bastion Host as an intermediary.
+Configure Security Groups and Firewalls:
+
+Update security groups to allow necessary traffic (SSH and optionally ICMP for ping).
+Ensure NACLs permit the required traffic.
+Adjust the OS firewall settings on the target server.
+Test SSH Access:
+
+Before running the Jenkins pipeline, manually SSH from the Jenkins server to the target server to confirm connectivity.
+Example:
+bash
+Copy code
+ssh -i /path/to/your-key.pem ubuntu@13.212.2.190
+Update Jenkins Pipeline if Using a Bastion Host:
+
+Modify the rsync command to route through the bastion host as shown earlier.
+Consider Using AWS SSM for Deployment:
+
+If managing network configurations is challenging, explore using AWS SSM to handle deployments without direct SSH access.
+Additional Tips
+Security Best Practices:
+
+Limit SSH Access: Only allow SSH from trusted IPs or through bastion hosts.
+Use Key-Based Authentication: Avoid password-based SSH for better security.
+Regularly Rotate SSH Keys: Maintain security by rotating SSH keys periodically.
+Logging and Monitoring:
+
+Enable VPC Flow Logs: Monitor traffic in and out of your VPC to diagnose connectivity issues.
+Check CloudWatch Logs: Use AWS CloudWatch to monitor logs from your instances and network components.
+Automate Network Configuration:
+
+Use Infrastructure as Code (IaC) tools like Terraform or AWS CloudFormation to manage and automate your network setups, ensuring consistency and ease of management.
+Conclusion
+The 100% packet loss from your ping attempt indicates a connectivity issue between your Jenkins server and the target server at 13.212.2.190. To resolve this:
+
+Verify the target server is running and accessible within your VPC.
+Ensure proper network configurations, including VPC settings, security groups, and firewalls, to allow necessary traffic.
+Establish secure and functional SSH access, potentially using a bastion host or AWS SSM if direct access isn't feasible.
+Test connectivity manually before relying on the Jenkins pipeline to automate deployments.
+By systematically addressing these areas, you'll be able to restore connectivity and enable your Jenkins pipeline to successfully deploy the WAR file to your Tomcat server.
